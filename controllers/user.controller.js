@@ -118,10 +118,105 @@ const getUserInfo = async (req, res) => {
     }
 };
 
+
+const getRevenue = async (req, res) => {
+    try {
+        const userId = req.params.id;
+        const currentDate = new Date();
+
+        const user = await User.findById(userId).select('revenue');
+
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        const periodRevenue = user.revenue;
+
+        // Calculate total revenue for all periods
+        const totalRevenue = periodRevenue.reduce((total, entry) => total + entry.amount, 0);
+
+        // Calculate total revenue for the current month
+        const startOfCurrentMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+        const currentMonthRevenue = periodRevenue
+            .filter(entry => entry.date >= startOfCurrentMonth)
+            .reduce((total, entry) => total + entry.amount, 0);
+
+        // Calculate total revenue for the current year
+        const startOfCurrentYear = new Date(currentDate.getFullYear(), 0, 1);
+        const currentYearRevenue = periodRevenue
+            .filter(entry => entry.date >= startOfCurrentYear)
+            .reduce((total, entry) => total + entry.amount, 0);
+
+        res.json({
+            userId,
+            totalRevenue,
+            currentMonthRevenue,
+            currentYearRevenue,
+            month: currentDate.getMonth() + 1,
+            year: currentDate.getFullYear()
+        });
+    } catch (error) {
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+};
+
+
+const getCurrentMonthRevenue = async (req, res) => {
+    try {
+        const userId = req.params.id;
+        const currentDate = new Date();
+        const startOfPeriod = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+
+        const users = await User.find({
+            '_id': userId,
+            'revenue.date': { $gte: startOfPeriod }
+        }).select('revenue');
+
+        const periodRevenue = users.flatMap(user => user.revenue);
+        const currentMonthRevenue = periodRevenue
+            .filter(entry => entry.date.getMonth() === currentDate.getMonth());
+
+        // Calculate total revenue for the current month
+        const totalCurrentMonthRevenue = currentMonthRevenue.reduce((total, entry) => total + entry.amount, 0);
+
+        res.json({ userId, currentMonthRevenue, totalCurrentMonthRevenue, month: currentDate.getMonth() + 1 });
+    } catch (error) {
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+};
+
+const getCurrentYearRevenue = async (req, res) => {
+    try {
+        const userId = req.params.id;
+        const currentDate = new Date();
+        const startOfPeriod = new Date(currentDate.getFullYear(), 0, 1);
+
+        const users = await User.find({
+            '_id': userId,
+            'revenue.date': { $gte: startOfPeriod }
+        }).select('revenue');
+
+        const periodRevenue = users.flatMap(user => user.revenue);
+        const currentYearRevenue = periodRevenue
+            .filter(entry => entry.date.getFullYear() === currentDate.getFullYear());
+
+        // Calculate total revenue for the current year
+        const totalCurrentYearRevenue = currentYearRevenue.reduce((total, entry) => total + entry.amount, 0);
+
+        res.json({ userId, currentYearRevenue, totalCurrentYearRevenue, year: currentDate.getFullYear() });
+    } catch (error) {
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+};
+
+
 module.exports = {
     signUp,
     signIn,
     updateUserRole,
     getAllUsers,
     getUserInfo,
+    getRevenue,
+    getCurrentMonthRevenue,
+    getCurrentYearRevenue
 };
