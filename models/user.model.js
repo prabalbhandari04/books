@@ -1,8 +1,7 @@
 const mongoose = require('mongoose');
 
 const userSchema = new mongoose.Schema({
-    userId: { type: String, unique: true },
-    userType: { type: String, enum: ['Author', 'Admin', 'Retail_User'], required: true },
+    userType: { type: Number, enum: [0, 1, 2], required: true }, // 0: Admin, 1: Author, 2: Retail User
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
     created: { type: Date, default: Date.now },

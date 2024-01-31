@@ -5,6 +5,12 @@ const morgan = require('morgan');
 
 const app = express();
 const PORT = config.port;
+const bodyParser = require('body-parser');
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
+
+
+const userRouter = require('./routes/user.route')
 
 mongoose.connect(config.mongodbURI, {
   useNewUrlParser: true,
@@ -14,6 +20,9 @@ mongoose.connect(config.mongodbURI, {
 if (config.env === 'development') {
   app.use(morgan('dev'));
 }
+
+// Routes
+app.use('/api/v1/users', userRouter);
 
 // Route for the root path ("/")
 app.get('/', (req, res) => {
