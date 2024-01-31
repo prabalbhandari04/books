@@ -8,7 +8,7 @@ const authenticateToken = (req, res, next) => {
         return res.status(401).json({ error: 'Access denied' });
     }
 
-    jwt.verify(token, config.token_secret , (err, user) => {
+    jwt.verify(token, config.token_secret, (err, user) => {
         if (err) {
             return res.status(403).json({ error: 'Invalid token' });
         }
@@ -17,6 +17,8 @@ const authenticateToken = (req, res, next) => {
         next();
     });
 };
+
+
 
 module.exports = {
     authenticateToken

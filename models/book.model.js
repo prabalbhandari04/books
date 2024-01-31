@@ -5,7 +5,8 @@ const bookSchema = new mongoose.Schema({
     sellCount: { type: Number, default: 0 },
     title: { type: String, unique: true, required: true },
     description: { type: String },
-    price: { type: Number, min: 100, max: 1000, required: true }
+    price: { type: Number, min: 100, max: 1000, required: true },
+    isDeleted: { type: Boolean, default: false }
 });
 
 const Book = mongoose.model('Book', bookSchema);
