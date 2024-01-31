@@ -1,33 +1,34 @@
 const mongoose = require('mongoose');
 
 const purchaseHistorySchema = new mongoose.Schema({
-    // Automatically generated purchaseId
     purchaseId: { type: String, unique: true },
     bookId: { type: String, ref: 'Book', required: true },
     userId: { type: String, ref: 'User', required: true },
-    purchaseDate: { type: Date, required: true },
-    price: { type: Number, required: true },
-    quantity: { type: Number, default: 1 }
+    purchaseDate: { type: Date, default: Date.now, required: true },
+    price: { type: Number},
+    quantity: { type: Number, default: 1 },
+    totalAmount: { type: Number },
+    isDeleted: { type: Boolean, default: false }
 });
 
-// Auto-generate purchaseId before saving the document
-purchaseHistorySchema.pre('save', function (next) {
+purchaseHistorySchema.pre('save', async function (next) {
     const currentDate = new Date();
     const year = currentDate.getFullYear().toString();
     const month = ('0' + (currentDate.getMonth() + 1)).slice(-2);
-    const numericIncrement = this.constructor.increment;
 
-    // Generate the purchaseId in the format: {{YEAR}}-{{MONTH}}-{{numeric increment id}}
-    this.purchaseId = `${year}-${month}-${numericIncrement}`;
-    
-    // Increment the numeric increment for the next purchase
-    this.constructor.increment++;
+    if (!this.purchaseId) {
+        this.purchaseId = await this.constructor.generatePurchaseId(year, month);
+    }
 
     next();
 });
 
-// Initialize the numeric increment to 1
-purchaseHistorySchema.statics.increment = 1;
+purchaseHistorySchema.statics.generatePurchaseId = async function (year, month) {
+    const lastPurchase = await this.findOne({}, {}, { sort: { purchaseId: -1 } });
+    const lastId = lastPurchase ? parseInt(lastPurchase.purchaseId.split('-')[2]) : 0;
+    const increment = lastId + 1;
+    return `${year}-${month}-${increment}`;
+};
 
 const PurchaseHistory = mongoose.model('PurchaseHistory', purchaseHistorySchema);
 

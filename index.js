@@ -12,6 +12,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 
 const userRouter = require('./routes/user.route')
 const bookRouter = require('./routes/book.route');
+const PurchaseRouter = require('./routes/purchase.route');
 
 mongoose.connect(config.mongodbURI, {
   useNewUrlParser: true,
@@ -25,6 +26,8 @@ if (config.env === 'development') {
 // Routes
 app.use('/api/v1/users', userRouter);
 app.use('/api/v1/book', bookRouter);
+app.use('/api/v1/purchase', PurchaseRouter);
+
 app.get('/', (req, res) => {
   const environmentMessage = `Server is running on http://localhost:${PORT} in ${config.env} environment.`;
   res.send(environmentMessage);
