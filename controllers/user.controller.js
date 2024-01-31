@@ -59,7 +59,7 @@ const signIn = async (req, res) => {
         }
 
         // Generate a JWT token for authentication
-        const token = jwt.sign({ userId: user._id }, config.token_secret , { expiresIn: '1d' });
+        const token = jwt.sign({ userId: user._id }, config.token_secret , { expiresIn: '7d' });
 
         res.json({ token });
     } catch (error) {
@@ -69,7 +69,59 @@ const signIn = async (req, res) => {
 };
 
 
+const updateUserRole = async (req, res) => {
+    try {
+        const { userId, newRole } = req.body;
+
+        // Validate if required fields are present in the request
+        if (!userId || !newRole) {
+            return res.status(400).json({ error: 'Missing required fields' });
+        }
+
+        // Update the user role in the database
+        const updatedUser = await User.findByIdAndUpdate(userId, { userType: newRole }, { new: true });
+
+        if (!updatedUser) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        res.json({ message: 'User role updated successfully', updatedUser });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+};
+
+const getAllUsers = async (req, res) => {
+    try {
+        // Fetch all users from the database
+        const users = await User.find();
+
+        res.json({ users });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+};
+
+const getUserInfo = async (req, res) => {
+    try {
+        // Get user information from the authenticated user (req.user)
+        const userId = req.user.userId;
+        const user = await User.findById(userId);
+
+        res.json({ user });
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+};
+
 module.exports = {
     signUp,
     signIn,
+    updateUserRole,
+    getAllUsers,
+    getUserInfo,
 };
