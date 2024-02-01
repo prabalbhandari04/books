@@ -46,9 +46,9 @@ const sendRevenueEmail = (userEmail,overallRevenue, currentMonthRevenue, current
         <div style="max-width: 700px; margin:auto; border: 10px solid #ddd; padding: 50px 20px; font-size: 110%;">
           <h2 style="text-align: center; text-transform: uppercase;color: teal;">Revenue Details</h2>
           <p>Here are the revenue details for author :</p>
-          <p><strong>Overall Revenue:</strong>Rs. ${overallRevenue}</p>
-          <p><strong>Current Month Revenue:</strong>Rs. ${currentMonthRevenue}</p>
-          <p><strong>Current Year Revenue:</strong>Rs. ${currentYearRevenue}</p>
+          <p><strong>Overall Revenue:</strong> Rs. ${overallRevenue}</p>
+          <p><strong>Current Month Revenue:</strong> Rs. ${currentMonthRevenue}</p>
+          <p><strong>Current Year Revenue:</strong> Rs. ${currentYearRevenue}</p>
           <p><strong>Month:</strong> ${month}</p>
           <p><strong>Year:</strong> ${year}</p>
           <p>If you have any questions or concerns, please contact our support team at support@ayuhapp.com.</p>
