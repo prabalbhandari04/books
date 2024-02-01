@@ -119,95 +119,106 @@ const getUserInfo = async (req, res) => {
 };
 
 
-const getRevenue = async (req, res) => {
+const getRevenue = async (userId) => {
+    const currentDate = new Date();
+    const user = await User.findById(userId).select('revenue');
+
+    if (!user) {
+        throw { status: 404, message: 'User not found' };
+    }
+
+    const periodRevenue = user.revenue;
+
+    // Calculate total revenue for all periods
+    const totalRevenue = periodRevenue.reduce((total, entry) => total + entry.amount, 0);
+
+    // Calculate total revenue for the current month
+    const startOfCurrentMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+    const currentMonthRevenue = periodRevenue
+        .filter(entry => entry.date >= startOfCurrentMonth)
+        .reduce((total, entry) => total + entry.amount, 0);
+
+    // Calculate total revenue for the current year
+    const startOfCurrentYear = new Date(currentDate.getFullYear(), 0, 1);
+    const currentYearRevenue = periodRevenue
+        .filter(entry => entry.date >= startOfCurrentYear)
+        .reduce((total, entry) => total + entry.amount, 0);
+
+    return {
+        userId,
+        totalRevenue,
+        currentMonthRevenue,
+        currentYearRevenue,
+        month: currentDate.getMonth() + 1,
+        year: currentDate.getFullYear()
+    };
+};
+
+const getCurrentMonthRevenue = async (userId) => {
+    const currentDate = new Date();
+    const startOfPeriod = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+
+    const users = await User.find({
+        '_id': userId,
+        'revenue.date': { $gte: startOfPeriod }
+    }).select('revenue');
+
+    const periodRevenue = users.flatMap(user => user.revenue);
+    const currentMonthRevenue = periodRevenue
+        .filter(entry => entry.date.getMonth() === currentDate.getMonth());
+
+    // Calculate total revenue for the current month
+    const totalCurrentMonthRevenue = currentMonthRevenue.reduce((total, entry) => total + entry.amount, 0);
+
+    return { userId, currentMonthRevenue, totalCurrentMonthRevenue, month: currentDate.getMonth() + 1 };
+};
+
+const getCurrentYearRevenue = async (userId) => {
+    const currentDate = new Date();
+    const startOfPeriod = new Date(currentDate.getFullYear(), 0, 1);
+
+    const users = await User.find({
+        '_id': userId,
+        'revenue.date': { $gte: startOfPeriod }
+    }).select('revenue');
+
+    const periodRevenue = users.flatMap(user => user.revenue);
+    const currentYearRevenue = periodRevenue
+        .filter(entry => entry.date.getFullYear() === currentDate.getFullYear());
+
+    // Calculate total revenue for the current year
+    const totalCurrentYearRevenue = currentYearRevenue.reduce((total, entry) => total + entry.amount, 0);
+
+    return { userId, currentYearRevenue, totalCurrentYearRevenue, year: currentDate.getFullYear() };
+};
+
+const getAllRevenueData = async (req, res) => {
     try {
         const userId = req.params.id;
-        const currentDate = new Date();
 
-        const user = await User.findById(userId).select('revenue');
+        // Call the controllers to get data
+        const overallRevenueData = await getRevenue(userId);
+        const currentMonthRevenueData = await getCurrentMonthRevenue(userId);
+        const currentYearRevenueData = await getCurrentYearRevenue(userId);
 
-        if (!user) {
-            return res.status(404).json({ error: 'User not found' });
-        }
-
-        const periodRevenue = user.revenue;
-
-        // Calculate total revenue for all periods
-        const totalRevenue = periodRevenue.reduce((total, entry) => total + entry.amount, 0);
-
-        // Calculate total revenue for the current month
-        const startOfCurrentMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
-        const currentMonthRevenue = periodRevenue
-            .filter(entry => entry.date >= startOfCurrentMonth)
-            .reduce((total, entry) => total + entry.amount, 0);
-
-        // Calculate total revenue for the current year
-        const startOfCurrentYear = new Date(currentDate.getFullYear(), 0, 1);
-        const currentYearRevenue = periodRevenue
-            .filter(entry => entry.date >= startOfCurrentYear)
-            .reduce((total, entry) => total + entry.amount, 0);
-
-        res.json({
+        // Combine the results and send the response
+        const combinedData = {
             userId,
-            totalRevenue,
-            currentMonthRevenue,
-            currentYearRevenue,
-            month: currentDate.getMonth() + 1,
-            year: currentDate.getFullYear()
-        });
+            overallRevenue: overallRevenueData.totalRevenue,
+            currentMonthRevenue: currentMonthRevenueData.totalCurrentMonthRevenue,
+            currentYearRevenue: currentYearRevenueData.totalCurrentYearRevenue,
+            month: currentMonthRevenueData.month,
+            year: currentYearRevenueData.year
+        };
+
+        res.json(combinedData);
     } catch (error) {
-        res.status(500).json({ error: 'Internal Server Error' });
+        const status = error.status || 500;
+        const message = error.message || 'Internal Server Error';
+        res.status(status).json({ error: message });
     }
 };
 
-
-const getCurrentMonthRevenue = async (req, res) => {
-    try {
-        const userId = req.params.id;
-        const currentDate = new Date();
-        const startOfPeriod = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
-
-        const users = await User.find({
-            '_id': userId,
-            'revenue.date': { $gte: startOfPeriod }
-        }).select('revenue');
-
-        const periodRevenue = users.flatMap(user => user.revenue);
-        const currentMonthRevenue = periodRevenue
-            .filter(entry => entry.date.getMonth() === currentDate.getMonth());
-
-        // Calculate total revenue for the current month
-        const totalCurrentMonthRevenue = currentMonthRevenue.reduce((total, entry) => total + entry.amount, 0);
-
-        res.json({ userId, currentMonthRevenue, totalCurrentMonthRevenue, month: currentDate.getMonth() + 1 });
-    } catch (error) {
-        res.status(500).json({ error: 'Internal Server Error' });
-    }
-};
-
-const getCurrentYearRevenue = async (req, res) => {
-    try {
-        const userId = req.params.id;
-        const currentDate = new Date();
-        const startOfPeriod = new Date(currentDate.getFullYear(), 0, 1);
-
-        const users = await User.find({
-            '_id': userId,
-            'revenue.date': { $gte: startOfPeriod }
-        }).select('revenue');
-
-        const periodRevenue = users.flatMap(user => user.revenue);
-        const currentYearRevenue = periodRevenue
-            .filter(entry => entry.date.getFullYear() === currentDate.getFullYear());
-
-        // Calculate total revenue for the current year
-        const totalCurrentYearRevenue = currentYearRevenue.reduce((total, entry) => total + entry.amount, 0);
-
-        res.json({ userId, currentYearRevenue, totalCurrentYearRevenue, year: currentDate.getFullYear() });
-    } catch (error) {
-        res.status(500).json({ error: 'Internal Server Error' });
-    }
-};
 
 
 module.exports = {
@@ -216,7 +227,6 @@ module.exports = {
     updateUserRole,
     getAllUsers,
     getUserInfo,
-    getRevenue,
-    getCurrentMonthRevenue,
-    getCurrentYearRevenue
+    getAllRevenueData,
+    getCurrentMonthRevenue
 };
