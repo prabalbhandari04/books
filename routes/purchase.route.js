@@ -4,7 +4,7 @@ const {
   createPurchase,
   getAllPurchases,
   getPurchaseById,
-  updatePurchase,
+  getUserPurchaseHistory,
   deletePurchase,
 } = require('../controllers/purchase.controller');
 
@@ -14,5 +14,6 @@ router.post('/:id', authenticateToken, createPurchase);
 router.get('/', getAllPurchases);
 router.get('/:id', getPurchaseById);
 router.delete('/:id', authenticateToken, deletePurchase);
+router.get('/purchase-history/:id', authenticateToken, getUserPurchaseHistory);
 
 module.exports = router;

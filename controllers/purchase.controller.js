@@ -1,6 +1,7 @@
 const { PurchaseHistory } = require('../models/purchase.model');
 const { Book } = require('../models/book.model');
 const { User } = require('../models/user.model');
+const sendEmail = require('../utils/sendMail');
 
 exports.createPurchase = async (req, res) => {
   try {
@@ -9,7 +10,7 @@ exports.createPurchase = async (req, res) => {
 
     // Create a new purchase instance
     const purchase = new PurchaseHistory({
-      bookId: bookId,
+      bookId,
       userId,
       quantity,
     });
@@ -17,8 +18,8 @@ exports.createPurchase = async (req, res) => {
     // Save the purchase document to the database
     await purchase.save();
 
-    // Update the sell count for the corresponding book
-    await Book.findByIdAndUpdate(bookId, { $inc: { sellCount: 1 } });
+    // Update the sell count for the corresponding book by adding quantity
+    await Book.findByIdAndUpdate(bookId, { $inc: { sellCount: quantity } });
 
     // Update the revenue for all corresponding authors
     const book = await Book.findById(bookId).populate('authors');
@@ -26,8 +27,8 @@ exports.createPurchase = async (req, res) => {
 
     // Calculate revenue and add to each author's revenue array
     const revenueAmount = book.price * quantity;
-    purchase.totalAmount = revenueAmount
-    await purchase.save()
+    purchase.totalAmount = revenueAmount;
+    await purchase.save();
 
     // Update revenue for each author
     for (const authorId of authorIds) {
@@ -36,7 +37,21 @@ exports.createPurchase = async (req, res) => {
         author.revenue.push({ amount: revenueAmount, date: purchase.purchaseDate });
         await author.save();
       }
+      
+    // Retrieve book details for the email
+    const bookDetails = await Book.findById(bookId);
+    const purchaseDetails = {
+      bookTitle: bookDetails.title,
+      price: bookDetails.price,
+      quantity: purchase.quantity,
+      totalAmount: purchase.totalAmount,
+    };
+
+    // Send purchase details email to the user
+    const userEmail = author.email; // Replace with the function to get user email
+    sendEmail(userEmail);
     }
+
 
     // Respond with the created purchase document
     res.status(201).json(purchase);
@@ -81,6 +96,17 @@ exports.deletePurchase = async (req, res) => {
     }
     res.json({ message: 'Purchase deleted successfully', purchase });
 
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+exports.getUserPurchaseHistory = async (req, res) => {
+  try {
+    const userId = req.params.id;
+    const userPurchases = await PurchaseHistory.find({ userId, isDeleted: { $ne: true } });
+
+    res.status(200).json(userPurchases);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
