@@ -2,6 +2,7 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const { User } = require('../models/user.model'); 
 const config = require('../config/config');
+const sendRevenueEmail = require('../utils/sendRevenueEmail');
 
 const signUp = async (req, res) => {
     try {
@@ -194,7 +195,7 @@ const getCurrentYearRevenue = async (userId) => {
 
 const getAllRevenueData = async (req, res) => {
     try {
-        const userId = req.params.id;
+        const userId = req.user.userId;
 
         // Call the controllers to get data
         const overallRevenueData = await getRevenue(userId);
@@ -210,6 +211,17 @@ const getAllRevenueData = async (req, res) => {
             month: currentMonthRevenueData.month,
             year: currentYearRevenueData.year
         };
+        const user = await User.findById(req.user.userId);
+        const userEmail = user.email;  
+        console.log(userEmail)
+        sendRevenueEmail(
+            userEmail,
+            overallRevenueData.totalRevenue,
+            currentMonthRevenueData.totalCurrentMonthRevenue,
+            currentYearRevenueData.totalCurrentYearRevenue,
+            currentMonthRevenueData.month,
+            currentYearRevenueData.year
+        );
 
         res.json(combinedData);
     } catch (error) {

@@ -9,7 +9,7 @@ router.post('/signin', signIn);
 router.put('/updateUserRole', authenticateToken, updateUserRole);
 router.get('/getAllUsers', getAllUsers);
 router.get('/profile', authenticateToken, getUserInfo);
-router.get('/revenue/:id', authenticateToken, getAllRevenueData);
+router.get('/revenue', authenticateToken, getAllRevenueData);
 
 module.exports = router;
 
