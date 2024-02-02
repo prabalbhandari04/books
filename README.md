@@ -2,33 +2,32 @@ Backend Book Store Service Introduction
 
 This repository contains the backend implementation for a Book Store
 Application, focusing on user management, book management, purchase
-history, and revenue tracking for authors. Entities Users Types
+history, and revenue tracking for authors. 
 
-Author Admin Retail Users
+Entities Users Types are : 
 
-Actions
-
-Buy books View purchase history
+Author ,Admin, Retail Users
 
 Books Attributes
 
-bookId: Unique identifier (e.g., book-1, book-2, \...) authors: Single
-or multiple authors sellCount: Either stored in the database or computed
-dynamically based on purchase history title: Unique string value (used
-as a slug for the book URL) description: Book description price: Range
+bookId: Unique identifier (e.g., book-1, book-2, \...) 
+authors: Single or multiple authors 
+sellCount: Either stored in the database or computed dynamically based on purchase history 
+title: Unique string value (used
+as a slug for the book URL) 
+description: Book description 
+price: Range
 value between 100 and 1000
 
 Purchase History Attributes
 
 Unique ID format: {{YEAR}}-{{MONTH}}-{{numeric increment id}}
-purchaseId: Unique identifier (e.g., 2021-01-1, 2021-01-2, \...) bookId:
-Unique identifier of the book purchased userId: Unique identifier of the
-user who purchased the book purchaseDate: Date of purchase price: Price
-of the book at the time of purchase quantity: Number of books purchased
-
-Actions
-
-Users can view their purchase history
+purchaseId: Unique ID format: {{YEAR}}-{{MONTH}}-{{numeric increment id}}
+bookId: Unique identifier of the book purchased 
+userId: Unique identifier of the user who purchased the book 
+purchaseDate: Date of purchase 
+price: Price of the book at the time of purchase 
+quantity: Number of books purchased
 
 Revenue Tracking for Authors
 
