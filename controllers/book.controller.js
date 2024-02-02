@@ -2,12 +2,34 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const { Book } = require('../models/book.model'); 
 const config = require('../config/config');
-
+const sendNotif = require('../utils/sendNotif');
+const { User } = require('../models/user.model'); 
 
 const createBook = async (req, res) => {
   try {
     const book = new Book(req.body);
-    console.log(req.body);
+    await book.save();
+
+    // Retrieve all retail users' emails from the User model
+    const users = await User.find();
+    const userEmails = users.map(user => user.email);
+
+    // Define book details for the email template
+    const { title, price, quantity } = req.body;
+
+    // Send bulk emails with a limit of 100 emails per minute
+    const emailsPerMinute = 100;
+    const delayBetweenEmails = 60000 / emailsPerMinute;
+
+    const authorIds = book.authors; 
+    const author = await User.findById(authorIds);
+    const authorEmail = author.email;
+
+    for (const userEmail of userEmails) {
+      sendNotif(userEmail, title, price, authorEmail);
+      await new Promise(resolve => setTimeout(resolve, delayBetweenEmails));
+    }
+   
     await book.save();
     res.status(201).json(book);
   } catch (error) {
@@ -15,6 +37,9 @@ const createBook = async (req, res) => {
     res.status(500).json({ error: 'Internal Server Error' });
   }
 };
+
+module.exports = createBook;
+
 
 const getBooks = async (req, res) => {
   try {
